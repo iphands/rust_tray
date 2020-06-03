@@ -16,8 +16,7 @@ fn get_pactl_data() -> String {
 }
 
 fn find_mic_status(pactl_data: String) -> bool {
-    let mut lines = pactl_data.lines();
-    for (num, line) in lines.enumerate() {
+    for (num, line) in pactl_data.lines().enumerate() {
         if line.contains("Description: HD Webcam C615") {
             // println!("{}: {}", num, line);
             // println!("{}", pactl_data.lines().nth(num + 5).unwrap());
@@ -32,7 +31,7 @@ fn find_mic_status(pactl_data: String) -> bool {
 }
 
 fn do_mic() -> Result<(), systray::Error> {
-    let mut app;
+    let app;
 
     match systray::Application::new() {
         Ok(w) => app = w,
@@ -51,9 +50,9 @@ fn do_mic() -> Result<(), systray::Error> {
 
         if state != last_state {
             if state {
-                app.set_icon_from_file(icons[1]);
+                app.set_icon_from_file(icons[1]).unwrap();
             } else {
-                app.set_icon_from_file(icons[0]);
+                app.set_icon_from_file(icons[0]).unwrap();
             }
         }
 
