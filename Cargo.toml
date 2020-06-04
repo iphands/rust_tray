@@ -17,3 +17,5 @@ opt-level = 3
 [dependencies]
 systray = "0.4.0"
 libpulse-binding = "2.16"
+rust-embed="5.5.1"
+

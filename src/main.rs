@@ -1,3 +1,8 @@
+use rust_embed::RustEmbed;
+#[derive(RustEmbed)]
+#[folder = "assets/"]
+struct Asset;
+
 extern crate libpulse_binding as pulse;
 
 use std::rc::Rc;
@@ -56,8 +61,8 @@ fn start_app() -> (systray::Application, std::vec::Vec<String>) {
     }
 
     let icons = vec![
-        "/home/iphands/prog/rust/rust_tray/assets/mic_red.png".to_string(),
-        "/home/iphands/prog/rust/rust_tray/assets/mic_green.png".to_string()
+        Asset::get("/mic_red.png"),
+        Asset::get("/mic_green.png")
     ];
 
     return (app, icons);
