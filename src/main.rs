@@ -3,6 +3,9 @@ extern crate libpulse_binding as pulse;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::ops::Deref;
+use std::process::Command;
+// use std::time::Instant;
+
 use pulse::mainloop::standard::Mainloop;
 use pulse::context::Context;
 use pulse::proplist::Proplist;
@@ -13,8 +16,6 @@ use pulse::context::subscribe::subscription_masks;
 use pulse::context::subscribe::Operation;
 use pulse::context::subscribe::Facility;
 
-use std::process::Command;
-
 fn main() {
     let (app, icons) = do_mic();
     do_event_loop(app, icons);
@@ -23,6 +24,7 @@ fn main() {
 fn get_pactl_data() -> String {
     let output = Command::new("/usr/bin/pactl")
         .arg("list")
+        .arg("sources")
         .output()
         .expect("failed to execute process");
 
@@ -118,7 +120,11 @@ fn callback(app: systray::Application, icons: std::vec::Vec<String>) -> Box<dyn 
                 match operation_unsafe {
                     None => { eprintln!("Invalid operation received from PA"); }
                     Some(_) => {
-                        if find_mic_status(get_pactl_data()) {
+                        // let now = Instant::now();
+                        let state = find_mic_status(get_pactl_data());
+                        // println!("{}", now.elapsed().as_millis());
+
+                        if state {
                             app.set_icon_from_file(&icons[1]).unwrap();
                         } else {
                             app.set_icon_from_file(&icons[0]).unwrap();
