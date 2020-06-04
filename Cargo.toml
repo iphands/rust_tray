@@ -18,3 +18,4 @@ opt-level = 3
 systray = "0.4.0"
 libpulse-binding = "2.16"
 clap = "2.33.1"
+lazy_static = "1.4.0"

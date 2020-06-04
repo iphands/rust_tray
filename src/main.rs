@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate lazy_static;
 extern crate clap;
 extern crate libpulse_binding as pulse;
 
@@ -15,11 +17,26 @@ use pulse::def::Retval;
 use pulse::mainloop::standard::{Mainloop, IterateResult};
 use pulse::proplist::Proplist;
 
+struct Config {
+    desc_substr: String,
+    assets_path: String
+}
+
+lazy_static! {
+    static ref CFG: Config = {
+        let (d, a) = do_cli();
+        return Config {
+            desc_substr: d,
+            assets_path: a
+        }
+    };
+}
+
 fn main() {
-    let (desc, assets) = do_cli();
-    let (tray_app, icons) = start_app(assets);
-    do_mic(&tray_app, &icons, &desc);
-    do_event_loop(tray_app, icons, desc);
+    // println!("CONFIG d:{} a:{}", CFG.desc_substr, CFG.assets_path);
+    let (tray_app, icons) = start_app();
+    do_mic(&tray_app, &icons);
+    do_event_loop(tray_app, icons);
 }
 
 fn do_cli() -> (String, String) {
@@ -78,7 +95,7 @@ fn find_mic_status(pactl_data: String, description_substring: &String) -> bool {
     std::process::exit(1);
 }
 
-fn start_app(assets: String) -> (systray::Application, std::vec::Vec<String>) {
+fn start_app() -> (systray::Application, std::vec::Vec<String>) {
     let app;
 
     match systray::Application::new() {
@@ -87,16 +104,16 @@ fn start_app(assets: String) -> (systray::Application, std::vec::Vec<String>) {
     }
 
     let icons = vec![
-        format!("{}{}", assets, "/mic_red.png").to_string(),
-        format!("{}{}", assets, "/mic_green.png").to_string()
+        format!("{}{}", CFG.assets_path, "/mic_red.png").to_string(),
+        format!("{}{}", CFG.assets_path, "/mic_green.png").to_string()
     ];
 
     return (app, icons);
 }
 
-fn do_mic(app: &systray::Application, icons: &std::vec::Vec<String>, description_substring: &std::string::String) {
+fn do_mic(app: &systray::Application, icons: &std::vec::Vec<String>) {
     // let now = Instant::now();
-    let state = find_mic_status(get_pactl_data(), description_substring);
+    let state = find_mic_status(get_pactl_data(), &CFG.desc_substr);
     // println!("{}", now.elapsed().as_millis());
 
     if state {
@@ -107,7 +124,7 @@ fn do_mic(app: &systray::Application, icons: &std::vec::Vec<String>, description
     app.set_icon_from_file(&icons[0]).unwrap();
 }
 
-fn do_event_loop(app: systray::Application, icons: std::vec::Vec<String>, description_substring: std::string::String) {
+fn do_event_loop(app: systray::Application, icons: std::vec::Vec<String>) {
     let mut proplist = Proplist::new().unwrap();
     proplist.set_str(pulse::proplist::properties::APPLICATION_NAME, "rust_tray").unwrap();
 
@@ -142,17 +159,17 @@ fn do_event_loop(app: systray::Application, icons: std::vec::Vec<String>, descri
 
     let interest = subscription_masks::SOURCE;
 
-    context.borrow_mut().set_subscribe_callback(Some(callback(app, icons, description_substring)));
+    context.borrow_mut().set_subscribe_callback(Some(callback(app, icons)));
     context.borrow_mut().subscribe(interest, |_| {});
 
     mainloop.borrow_mut().run().unwrap();
     mainloop.borrow_mut().quit(Retval(0));
 }
 
-fn callback(app: systray::Application, icons: std::vec::Vec<String>, description_substring: String) -> Box<dyn FnMut(Option<Facility>, Option<Operation>, u32)> {
+fn callback(app: systray::Application, icons: std::vec::Vec<String>) -> Box<dyn FnMut(Option<Facility>, Option<Operation>, u32)> {
     Box::new(move |facility_unsafe: Option<Facility>, operation_unsafe: Option<Operation>, _idx: u32| {
         if let (Some(_fac), Some(_op)) = (facility_unsafe, operation_unsafe) {
-            do_mic(&app, &icons, &description_substring);
+            do_mic(&app, &icons);
         }
     })
 }

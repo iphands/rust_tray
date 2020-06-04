@@ -671,6 +671,7 @@ name = "rust_tray"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "lazy_static",
  "libpulse-binding",
  "systray",
 ]
