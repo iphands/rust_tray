@@ -64,7 +64,7 @@ fn get_pactl_data() -> String {
 
 fn find_mic_status(pactl_data: String, description_substring: &String) -> bool {
     for (num, line) in pactl_data.lines().enumerate() {
-        if line.contains(description_substring) {
+        if line.contains("Description: ") && line.contains(description_substring) {
             // println!("{}: {}", num, line);
             // println!("{}", pactl_data.lines().nth(num + 5).unwrap());
             if pactl_data.lines().nth(num + 5).unwrap().contains("Mute: yes") {
@@ -74,7 +74,12 @@ fn find_mic_status(pactl_data: String, description_substring: &String) -> bool {
             }
         }
     }
-    return true;
+
+    eprintln!("Fatal error:");
+    eprintln!("  Unable to find input-description-substring ({}) in pactl output!", description_substring);
+    eprintln!("  Please make sure that the sub string you are looking for shows up in:");
+    eprintln!("  `pactl list sources | fgrep Description`");
+    std::process::exit(1);
 }
 
 fn start_app(assets: String) -> (systray::Application, std::vec::Vec<String>) {
