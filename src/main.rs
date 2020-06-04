@@ -17,7 +17,8 @@ use pulse::context::subscribe::Operation;
 use pulse::context::subscribe::Facility;
 
 fn main() {
-    let (app, icons) = do_mic();
+    let (app, icons) = start_app();
+    do_mic(&app, &icons);
     do_event_loop(app, icons);
 }
 
@@ -46,7 +47,7 @@ fn find_mic_status(pactl_data: String) -> bool {
     return true;
 }
 
-fn do_mic() -> (systray::Application, std::vec::Vec<String>) {
+fn start_app() -> (systray::Application, std::vec::Vec<String>) {
     let app;
 
     match systray::Application::new() {
@@ -59,13 +60,20 @@ fn do_mic() -> (systray::Application, std::vec::Vec<String>) {
         "/home/iphands/prog/rust/rust_tray/assets/mic_green.png".to_string()
     ];
 
-    if find_mic_status(get_pactl_data()) {
+    return (app, icons);
+}
+
+fn do_mic(app: &systray::Application, icons: &std::vec::Vec<String>) {
+    // let now = Instant::now();
+    let state = find_mic_status(get_pactl_data());
+    // println!("{}", now.elapsed().as_millis());
+
+    if state {
         app.set_icon_from_file(&icons[1]).unwrap();
-    } else {
-        app.set_icon_from_file(&icons[0]).unwrap();
+        return
     }
 
-    return (app, icons);
+    app.set_icon_from_file(&icons[0]).unwrap();
 }
 
 fn do_event_loop(app: systray::Application, icons: std::vec::Vec<String>) {
@@ -120,15 +128,7 @@ fn callback(app: systray::Application, icons: std::vec::Vec<String>) -> Box<dyn 
                 match operation_unsafe {
                     None => { eprintln!("Invalid operation received from PA"); }
                     Some(_) => {
-                        // let now = Instant::now();
-                        let state = find_mic_status(get_pactl_data());
-                        // println!("{}", now.elapsed().as_millis());
-
-                        if state {
-                            app.set_icon_from_file(&icons[1]).unwrap();
-                        } else {
-                            app.set_icon_from_file(&icons[0]).unwrap();
-                        }
+                        do_mic(&app, &icons);
                     }
                 }
             }
