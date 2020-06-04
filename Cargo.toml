@@ -8,10 +8,6 @@ edition = "2018"
 name = "rust_tray"
 path = "src/main.rs"
 
-[[bin]]
-name = "test_build"
-path = "src/event_test.rs"
-
 [profile.dev]
 opt-level = 0
 
@@ -20,6 +16,4 @@ opt-level = 3
 
 [dependencies]
 systray = "0.4.0"
-libpulse-mainloop-glib-sys = "1.13.1"
-libpulse-binding = "2.16.0"
-
+libpulse-binding = '2.16'

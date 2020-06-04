@@ -506,17 +506,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libpulse-mainloop-glib-sys"
-version = "1.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28197205dce07b1e42dac8b63c3bbc4d39662d4e59adb8a9924ab433ed72f939"
-dependencies = [
- "glib-sys",
- "libpulse-sys",
- "pkg-config",
-]
-
-[[package]]
 name = "libpulse-sys"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -682,7 +671,6 @@ name = "rust_tray"
 version = "0.1.0"
 dependencies = [
  "libpulse-binding",
- "libpulse-mainloop-glib-sys",
  "systray",
 ]
 
