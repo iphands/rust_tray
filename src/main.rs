@@ -9,15 +9,11 @@ use std::ops::Deref;
 use std::process::Command;
 // use std::time::Instant;
 
-use pulse::mainloop::standard::Mainloop;
 use pulse::context::Context;
-use pulse::proplist::Proplist;
-use pulse::mainloop::standard::IterateResult;
+use pulse::context::subscribe::{subscription_masks, Operation, Facility};
 use pulse::def::Retval;
-
-use pulse::context::subscribe::subscription_masks;
-use pulse::context::subscribe::Operation;
-use pulse::context::subscribe::Facility;
+use pulse::mainloop::standard::{Mainloop, IterateResult};
+use pulse::proplist::Proplist;
 
 fn main() {
     let (desc, assets) = do_cli();
@@ -128,8 +124,7 @@ fn do_event_loop(app: systray::Application, icons: std::vec::Vec<String>, descri
     // Wait for context to be ready
     loop {
         match mainloop.borrow_mut().iterate(false) {
-            IterateResult::Quit(_) |
-            IterateResult::Err(_) => {
+            IterateResult::Quit(_) | IterateResult::Err(_) => {
                 eprintln!("iterate state was not success, quitting...");
                 return;
             },
@@ -137,8 +132,7 @@ fn do_event_loop(app: systray::Application, icons: std::vec::Vec<String>, descri
         }
         match context.borrow().get_state() {
             pulse::context::State::Ready => { break; },
-            pulse::context::State::Failed |
-            pulse::context::State::Terminated => {
+            pulse::context::State::Failed | pulse::context::State::Terminated => {
                 eprintln!("context state failed/terminated, quitting...");
                 return;
             },
@@ -157,16 +151,8 @@ fn do_event_loop(app: systray::Application, icons: std::vec::Vec<String>, descri
 
 fn callback(app: systray::Application, icons: std::vec::Vec<String>, description_substring: String) -> Box<dyn FnMut(Option<Facility>, Option<Operation>, u32)> {
     Box::new(move |facility_unsafe: Option<Facility>, operation_unsafe: Option<Operation>, _idx: u32| {
-        match facility_unsafe {
-            None => { eprintln!("Invalid facility received from PA"); }
-            Some(_) => {
-                match operation_unsafe {
-                    None => { eprintln!("Invalid operation received from PA"); }
-                    Some(_) => {
-                        do_mic(&app, &icons, &description_substring);
-                    }
-                }
-            }
+        if let (Some(_fac), Some(_op)) = (facility_unsafe, operation_unsafe) {
+            do_mic(&app, &icons, &description_substring);
         }
     })
 }
