@@ -19,16 +19,13 @@ use pulse::proplist::Proplist;
 
 struct Config {
     desc_substr: String,
-    assets_path: String
+    assets_path: String,
+    pactl_path: String
 }
 
 lazy_static! {
     static ref CFG: Config = {
-        let (d, a) = do_cli();
-        return Config {
-            desc_substr: d,
-            assets_path: a
-        }
+        return do_cli();
     };
 }
 
@@ -39,7 +36,7 @@ fn main() {
     do_event_loop(tray_app, icons);
 }
 
-fn do_cli() -> (String, String) {
+fn do_cli() -> Config {
     let matches = App::new("rust_tray")
         .version("0.1.0")
         .author("Ian Page Hands <iphands@gmail.com>")
@@ -56,17 +53,24 @@ fn do_cli() -> (String, String) {
              .short("a")
              .long("assets-path")
              .takes_value(true)
-             .help("/opt/rust_tray/assets"))
+             .help("hint: ${git_repo}/assets"))
+        .arg(Arg::with_name("PACTL")
+             .value_name("path to pactl")
+             .short("p")
+             .long("pactl-path")
+             .takes_value(true)
+             .help("which pactl"))
         .get_matches();
 
-    let desc = matches.value_of("DESC").unwrap().to_string();
-    let assets = matches.value_of("ASSETS").unwrap_or("/opt/rust_tray/assets").to_string();
-
-    return (desc, assets);
+    Config {
+        desc_substr: matches.value_of("DESC").unwrap().to_string(),
+        assets_path: matches.value_of("ASSETS").unwrap_or("/opt/rust_tray/assets").to_string(),
+        pactl_path: matches.value_of("PACTL").unwrap_or("/usr/bin/pactl").to_string()
+    }
 }
 
 fn get_pactl_data() -> String {
-    let output = Command::new("/usr/bin/pactl")
+    let output = Command::new(CFG.pactl_path.clone())
         .arg("list")
         .arg("sources")
         .output()
