@@ -1,8 +1,6 @@
 use clap::{Arg, App};
 
-use crate::my::structs;
-
-pub fn do_cli() -> structs::Config {
+pub fn do_cli() -> (String, String, String) {
     let matches = App::new("rust_tray")
         .version("0.1.0")
         .author("Ian Page Hands <iphands@gmail.com>")
@@ -28,10 +26,8 @@ pub fn do_cli() -> structs::Config {
              .help("which pactl"))
         .get_matches();
 
-    structs::Config {
-        desc_substr: matches.value_of("DESC").unwrap().to_string(),
-        assets_path: matches.value_of("ASSETS").unwrap_or("/opt/rust_tray/assets").to_string(),
-        pactl_path: matches.value_of("PACTL").unwrap_or("/usr/bin/pactl").to_string()
-    }
+    return (matches.value_of("DESC").unwrap().to_string(),
+            matches.value_of("ASSETS").unwrap_or("/opt/rust_tray/assets").to_string(),
+            matches.value_of("PACTL").unwrap_or("/usr/bin/pactl").to_string());
 }
 

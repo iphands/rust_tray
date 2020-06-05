@@ -2,7 +2,7 @@ use std::process::Command;
 
 use crate::my::global::*;
 
-pub fn start_app() -> (systray::Application, std::vec::Vec<String>) {
+pub fn start_app() -> systray::Application {
     let app;
 
     match systray::Application::new() {
@@ -10,25 +10,18 @@ pub fn start_app() -> (systray::Application, std::vec::Vec<String>) {
         Err(_) => panic!("Can't create window!"),
     }
 
-    let icons = vec![
-        format!("{}{}", CONFIG.assets_path, "/mic_red.png").to_string(),
-        format!("{}{}", CONFIG.assets_path, "/mic_green.png").to_string()
-    ];
-
-    return (app, icons);
+    return app;
 }
 
-pub fn do_mic(app: &systray::Application, icons: &std::vec::Vec<String>) {
-    // let now = Instant::now();
+pub fn do_mic(app: &systray::Application) {
     let state = find_mic_status(get_pactl_data(), &CONFIG.desc_substr);
-    // println!("{}", now.elapsed().as_millis());
 
     if state {
-        app.set_icon_from_file(&icons[1]).unwrap();
+        app.set_icon_from_file(&CONFIG.icons[1]).unwrap();
         return
     }
 
-    app.set_icon_from_file(&icons[0]).unwrap();
+    app.set_icon_from_file(&CONFIG.icons[0]).unwrap();
 }
 
 fn get_pactl_data() -> String {

@@ -10,7 +10,7 @@ use pulse::proplist::Proplist;
 
 use crate::my::gui;
 
-pub fn do_event_loop(app: systray::Application, icons: std::vec::Vec<String>) {
+pub fn do_event_loop(app: systray::Application) {
     let mut proplist = Proplist::new().unwrap();
     proplist.set_str(pulse::proplist::properties::APPLICATION_NAME, "rust_tray").unwrap();
 
@@ -45,17 +45,17 @@ pub fn do_event_loop(app: systray::Application, icons: std::vec::Vec<String>) {
 
     let interest = subscription_masks::SOURCE;
 
-    context.borrow_mut().set_subscribe_callback(Some(callback(app, icons)));
+    context.borrow_mut().set_subscribe_callback(Some(callback(app)));
     context.borrow_mut().subscribe(interest, |_| {});
 
     mainloop.borrow_mut().run().unwrap();
     mainloop.borrow_mut().quit(Retval(0));
 }
 
-fn callback(app: systray::Application, icons: std::vec::Vec<String>) -> Box<dyn FnMut(Option<Facility>, Option<Operation>, u32)> {
+fn callback(app: systray::Application) -> Box<dyn FnMut(Option<Facility>, Option<Operation>, u32)> {
     Box::new(move |facility_unsafe: Option<Facility>, operation_unsafe: Option<Operation>, _idx: u32| {
         if let (Some(_fac), Some(_op)) = (facility_unsafe, operation_unsafe) {
-            gui::do_mic(&app, &icons);
+            gui::do_mic(&app);
         }
     })
 }
