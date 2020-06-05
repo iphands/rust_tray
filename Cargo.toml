@@ -12,7 +12,10 @@ path = "src/main.rs"
 opt-level = 0
 
 [profile.release]
-opt-level = 3
+opt-level = 'z'
+codegen-units = 1
+panic = 'abort'
+lto = true
 
 [dependencies]
 systray = "0.4.0"
