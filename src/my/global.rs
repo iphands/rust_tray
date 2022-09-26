@@ -3,7 +3,7 @@ use crate::my::structs::Config;
 
 lazy_static! {
     pub static ref CONFIG: Config = {
-        let (desc_substr, assets_path, pactl_path) = cli::do_cli();
+        let (auto, desc_substr, assets_path, pactl_path) = cli::do_cli();
 
         // setup icons
         let icons = vec![
@@ -12,6 +12,7 @@ lazy_static! {
         ];
 
         return Config {
+	    auto: auto,
             desc_substr: desc_substr,
             assets_path: assets_path,
             pactl_path: pactl_path,

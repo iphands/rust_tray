@@ -14,7 +14,10 @@ pub fn start_app() -> systray::Application {
 }
 
 pub fn do_mic(app: &systray::Application) {
-    let state = find_mic_status(get_pactl_data());
+    let state = match &CONFIG.auto {
+	true => find_mic_status_by_auto(get_pactl_data()),
+	false => find_mic_status_by_desc(get_pactl_data())
+    };
 
     if state {
         app.set_icon_from_file(&CONFIG.icons[1]).unwrap();
@@ -22,6 +25,7 @@ pub fn do_mic(app: &systray::Application) {
     }
 
     app.set_icon_from_file(&CONFIG.icons[0]).unwrap();
+
 }
 
 fn get_pactl_data() -> String {
@@ -34,12 +38,26 @@ fn get_pactl_data() -> String {
     return String::from_utf8_lossy(&output.stdout).to_string();
 }
 
-fn find_mic_status(pactl_data: String) -> bool {
+fn check_mute_line(offset: usize, mut lines: std::str::Lines) -> bool {
+    let line = lines.nth(offset).unwrap();
+    assert!(line.contains("Mute: "), "Expected to find a line beginnig with \"Mute:\", instead found {}", line);
+
+    if line.contains("Mute: yes") {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+fn find_mic_status_by_desc(pactl_data: String) -> bool {
+    assert!(CONFIG.desc_substr != "", "desc_substr is \"\" this should be impossible");
+    assert!(CONFIG.auto == true, "status_by_desc called while CONFIG.auto is true");
+
     for (num, line) in pactl_data.lines().enumerate() {
         if line.contains("Description: ") && line.contains(&CONFIG.desc_substr) {
             // println!("{}: {}", num, line);
             // println!("{}", pactl_data.lines().nth(num + 5).unwrap());
-            if pactl_data.lines().nth(num + 5).unwrap().contains("Mute: yes") {
+	    if check_mute_line(num + 5, pactl_data.lines()) {
                 return false;
             } else {
                 return true;
@@ -52,4 +70,19 @@ fn find_mic_status(pactl_data: String) -> bool {
     eprintln!("  Please make sure that the sub string you are looking for shows up in:");
     eprintln!("  `pactl list sources | fgrep Description`");
     std::process::exit(1);
+}
+
+fn find_mic_status_by_auto(pactl_data: String) -> bool {
+    assert!(CONFIG.desc_substr == "", "found input description in auto");
+    assert!(CONFIG.auto == true, "status_by_auto called while CONFIG.auto is false");
+
+    for (num, line) in pactl_data.lines().enumerate() {
+        if line.contains("State: ") && line.contains("RUNNING") {
+	    if check_mute_line(num + 7, pactl_data.lines()) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
