@@ -41,27 +41,39 @@ fn get_pactl_data() -> String {
 fn check_mute_line(offset: usize, mut lines: std::str::Lines) -> bool {
     let line = lines.nth(offset).unwrap();
     assert!(line.contains("Mute: "), "Expected to find a line beginnig with \"Mute:\", instead found {}", line);
+    return line.contains("Mute: yes");
+}
 
-    if line.contains("Mute: yes") {
-        return false;
-    } else {
-        return true;
-    }
+fn check_vol_zero(offset: usize, mut lines: std::str::Lines) -> bool {
+    let line = lines.nth(offset).unwrap();
+    assert!(line.contains("Volume: "), "Expected to find a line beginnig with \"Volume:\", instead found {}", line);
+    return line.contains(" /   0% / ");
+}
+
+fn is_monitor(offset: usize, mut lines: std::str::Lines) -> bool {
+    let line = lines.nth(offset).unwrap();
+    assert!(line.contains("Description: "), "Expected to find a line beginnig with \"Description: \", instead found {}", line);
+    return line.contains("Description: Monitor of ");
 }
 
 fn find_mic_status_by_desc(pactl_data: String) -> bool {
     assert!(CONFIG.desc_substr != "", "desc_substr is \"\" this should be impossible");
-    assert!(CONFIG.auto == true, "status_by_desc called while CONFIG.auto is true");
+    assert!(CONFIG.auto == false, "status_by_desc called while CONFIG.auto is true");
 
     for (num, line) in pactl_data.lines().enumerate() {
         if line.contains("Description: ") && line.contains(&CONFIG.desc_substr) {
-            // println!("{}: {}", num, line);
-            // println!("{}", pactl_data.lines().nth(num + 5).unwrap());
-	    if check_mute_line(num + 5, pactl_data.lines()) {
-                return false;
-            } else {
-                return true;
-            }
+	    if is_monitor(num, pactl_data.lines()) {
+		continue;
+	    }
+
+	    let muted = check_mute_line(num + 5, pactl_data.lines());
+	    let vol_zero = check_vol_zero(num + 6, pactl_data.lines());
+
+	    if muted || vol_zero {
+		return false;
+	    }
+
+	    return true;
         }
     }
 
@@ -78,11 +90,17 @@ fn find_mic_status_by_auto(pactl_data: String) -> bool {
 
     for (num, line) in pactl_data.lines().enumerate() {
         if line.contains("State: ") && line.contains("RUNNING") {
-	    if check_mute_line(num + 7, pactl_data.lines()) {
-                return true;
-            }
+	    if is_monitor(num + 2, pactl_data.lines()) {
+		continue;
+	    }
+
+	    let muted = check_mute_line(num + 7, pactl_data.lines());
+	    let vol_zero = check_vol_zero(num + 8, pactl_data.lines());
+	    if muted || vol_zero {
+		return false;
+	    }
         }
     }
 
-    return false;
+    return true;
 }
